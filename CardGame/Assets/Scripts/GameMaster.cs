@@ -4,10 +4,24 @@ using UnityEngine;
 
 public class GameMaster : MonoBehaviour
 {
+	static GameMaster _Instance;
+	public static GameMaster Instance
+	{
+		get
+		{
+			if( _Instance == null )
+				FindInstance();
+
+			return _Instance;
+		}
+	}
+
+	[SerializeField]
+	public EventManager EventManager;
 	[SerializeField]
 	List<Card> Cards;
 	[SerializeField]
-	CardStack CurrentDeck;
+	DrawPile CurrentPile;
 	[SerializeField]
 	Player PlayerOne;
 	[SerializeField]
@@ -15,10 +29,11 @@ public class GameMaster : MonoBehaviour
 
 	void Start()
 	{
+		InitCards();
 		PlayerOne.Init();
 		PlayerTwo.Init();
-		CurrentDeck.Init( 99, Cards );
-		CurrentDeck.Shuffle();
+		CurrentPile.Init( 99, Cards );
+		CurrentPile.Shuffle();
 	}
 
 	void Update()
@@ -27,14 +42,14 @@ public class GameMaster : MonoBehaviour
 		{
 			Debug.Log( "Player One" );
 			Card card;
-			if( CurrentDeck.Draw( CardStack.DrawType.Top, out card ) )
+			if( CurrentPile.DrawTopCard( out card ) )
 			{
 				if( PlayerOne.CurrentHand.Add( card ) )
 					Debug.Log( "Adding " + card.CurrentType );
 				else
 				{
 					Debug.Log( "Hand is full!" );
-					CurrentDeck.Add( card );
+					CurrentPile.Add( card );
 				}
 			}
 		}
@@ -43,14 +58,14 @@ public class GameMaster : MonoBehaviour
 		{
 			Debug.Log( "Player Two" );
 			Card card;
-			if( CurrentDeck.Draw( CardStack.DrawType.Top, out card ) )
+			if( CurrentPile.DrawTopCard( out card ) )
 			{
 				if( PlayerTwo.CurrentHand.Add( card ) )
 					Debug.Log( "Adding " + card.CurrentType );
 				else
 				{
 					Debug.Log( "Hand is full!" );
-					CurrentDeck.Add( card );
+					CurrentPile.Add( card );
 				}
 			}
 		}
@@ -66,5 +81,26 @@ public class GameMaster : MonoBehaviour
 			Debug.Log( "Player Two" );
 			PlayerTwo.CurrentHand.LogCards();
 		}
+	}
+
+	void InitCards()
+	{
+		foreach( Card card in Cards )
+			card.Init();
+	}
+
+	static void FindInstance()
+	{
+		GameObject gameMasterObj = GameObject.Find( "GameMaster" );
+		if( gameMasterObj != null )
+		{
+			GameMaster gameMaster = gameMasterObj.GetComponent<GameMaster>();
+			if( gameMaster != null )
+			{
+				_Instance = gameMaster;
+				return;
+			}
+		}
+		Debug.LogError( "GameMaster not found." );
 	}
 }

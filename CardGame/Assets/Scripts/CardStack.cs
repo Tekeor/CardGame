@@ -10,8 +10,8 @@ public class CardStack : MonoBehaviour
 		Random
 	}
 
-	int MaxCount = 1;
-	List<Card> Cards;
+	protected int MaxCount = 1;
+	protected List<Card> Cards;
 
 	public void Init( int max, List<Card> cards )
 	{
@@ -38,39 +38,41 @@ public class CardStack : MonoBehaviour
 		}
 	}
 
-	public bool Draw( DrawType drawType, out Card card )
-	{
-		Debug.Log( "Drawing a card..." );
-		if( Cards.Count > 0 )
-		{
-			switch( drawType )
-			{
-				case DrawType.Random:
-				int index = Random.Range( 0, Cards.Count );
-				card = Cards[index];
-				Cards.RemoveAt( index );
-				return true;
-
-				case DrawType.Top:
-				card = Cards[Cards.Count - 1];
-				Cards.RemoveAt( Cards.Count - 1 );
-				return true;
-			}
-		}
-		card = null;
-		return false;
-	}
-
 	public bool Add( Card card )
 	{
 		if( Cards.Count < MaxCount && !Cards.Contains( card ) )
 		{
 			Cards.Add( card );
 			card.transform.SetParent( transform );
+			GameMaster.Instance.EventManager.TriggerEvent( EventManager.EventTypes.CardAddedToStack, new KeyValuePair<CardStack, Card>(this, card) );
 			return true;
 		}
-		else
+		return false;
+	}
+
+	public bool Insert( int index, Card card )
+	{
+		if( Cards.Count < MaxCount && !Cards.Contains( card ) )
+		{
+			Cards.Insert( index, card );
+			card.transform.SetParent( transform );
+			GameMaster.Instance.EventManager.TriggerEvent( EventManager.EventTypes.CardAddedToStack, new KeyValuePair<CardStack, Card>( this, card ) );
+			return true;
+		}
+		return false;
+	}
+
+	public bool Remove( int index, out Card card )
+	{
+		if( Cards.Count == 0 || index >= Cards.Count )
+		{
+			card = null;
 			return false;
+		}
+		card = Cards[index];
+		Cards.RemoveAt( index );
+		GameMaster.Instance.EventManager.TriggerEvent( EventManager.EventTypes.CardRemovedFromStack, new KeyValuePair<CardStack, Card>( this, card ) );
+		return true;
 	}
 
 	public void LogCards()
